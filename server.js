@@ -45,7 +45,25 @@ startDemoExpiryJob();
 startCleanupJob();
 
 const PORT = Number(process.env.PORT || 3000);
+app.get('/qr', (req, res) => {
+const { getTenantDb } = require('./src/db/tenant');
+const db = getTenantDb(1);
 
+const row = db.prepare('SELECT qr_text FROM whatsapp_state ORDER BY id DESC LIMIT 1').get();
+
+if (!row || !row.qr_text) {
+return res.send('QR no disponible');
+}
+
+const base64Data = row.qr_text.replace(/^data:image\/png;base64,/, '');
+const img = Buffer.from(base64Data, 'base64');
+
+res.writeHead(200, {
+'Content-Type': 'image/png',
+'Content-Length': img.length
+});
+res.end(img);
+});
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en puerto ${PORT}`);
 });
